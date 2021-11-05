@@ -31,7 +31,7 @@ async function fetchNames() {
     await statusCheck(NAMES);
     const NAMES_TEXT = await NAMES.text();
     return NAMES_TEXT;
-  } catch(error) {
+  } catch (error) {
     handlError(error);
   }
 }
@@ -44,9 +44,9 @@ async function fetchNames() {
  * @param {object} res - response from get request
  * @returns {object} same as input
  */
- async function statusCheck(res) {
+async function statusCheck(res) {
   if (!res.ok) {
-   throw new Error(await res.test());
+    throw new Error(await res.test());
   }
 
   return res;
@@ -59,28 +59,34 @@ async function fetchNames() {
  * poke-dex-view section which displays all the pokemon
  * all of them except bulbasaur, charmander, and squirtle are given the class 'sprite'
  * which means they have not been found yet and are colored in black
- * @param {List of String} NAMES_LIST 
+ * @param {List of String} NAMES_LIST - list of all the pokemons names
  */
-async function appendSprites(NAMES_LIST) {
+function appendSprites(NAMES_LIST) {
   const POKE_DEX_VIEW = document.getElementById('pokedex-view');
-  for(let i = 0; i < NAMES_LIST.length; i++) {
-    let name_elements = NAMES_LIST[i].split(":");
-    let name = name_elements[1];
+  for (let i = 0; i < NAMES_LIST.length; i++) {
+    let nameElements = NAMES_LIST[i].split(":");
+    let name = nameElements[1];
     let endpoint = 'https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/sprites/';
     endpoint += name;
     endpoint += '.png';
 
     let image = document.createElement("img");
-    if(name === 'bulbasaur' || name === 'charmander' || name === 'squirtle') {
+    if (name === 'bulbasaur' || name === 'charmander' || name === 'squirtle') {
       image.classList.add('found');
-    } else {
-      image.classList.add('sprite');
+      image.addEventListener("click", onCardClick);
     }
+
+    image.classList.add('sprite');
+
     image.src = endpoint;
     let id = 'pokemon-' + name;
     image.id = id;
     POKE_DEX_VIEW.appendChild(image);
   }
+}
+
+function onCardClick() {
+  
 }
 
 function handlError(error) {
