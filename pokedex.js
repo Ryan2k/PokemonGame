@@ -85,8 +85,42 @@ function appendSprites(NAMES_LIST) {
   }
 }
 
-function onCardClick() {
+/**
+ * Called when a found item is clicked on. Attached when a item is declared
+ * as found. When the item is clicked, it calls the function below which
+ * pings the endpoint to gather information on the pokemon. That information
+ * is used to change the elements displayed on the left of the screen from
+ * the default values to the name, attributes, and photo of the clicked pokemon.
+ */
+async function onCardClick() {
+  let id = this.id;
+  let nameElements = id.split("-");
+  let name = nameElements[1];
   
+  const CARDS_JSON = await getPokemonsJSON(name);
+  
+}
+
+/**
+ * Take in the name of the pokemon that was clicked on and sends a
+ * GET request to the endpoint which contains information on that pokemon
+ * such as its name, attributes, icon image, etc.
+ * @param {String} name - name of the pokemon
+ * @returns {Object} json object from description
+ */
+async function getPokemonsJSON(name) {
+  let endpoint = 'https://courses.cs.washington.edu/'
+  + 'courses/cse154/webservices/pokedex/pokedex.php?pokemon=';
+  endpoint += name;
+
+  try {
+    const RESPONSE = await fetch(endpoint);
+    await statusCheck(RESPONSE);
+    const JSON = await RESPONSE.json();
+    return JSON;
+  } catch (error) {
+    handlError(error);
+  }
 }
 
 function handlError(error) {
