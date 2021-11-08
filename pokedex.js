@@ -23,7 +23,7 @@ async function getNamesList() {
 
 /**
  * Gets called in function above to retrieve names of all 151 pokemon
- * @returns {Text Object} response from fetch request to names endpoint
+ * @returns {Object} response from fetch request to names endpoint
  */
 async function fetchNames() {
   try {
@@ -96,9 +96,9 @@ async function onCardClick() {
   let id = this.id;
   let nameElements = id.split("-");
   let name = nameElements[1];
-  
+
   const CARDS_JSON = await getPokemonsJSON(name);
-  
+
   setName(name, 'p1');
   setMoves(CARDS_JSON, 'p1');
   setOthers(CARDS_JSON, 'p1');
@@ -116,8 +116,8 @@ async function onCardClick() {
  * @returns {Object} json object from description
  */
 async function getPokemonsJSON(name) {
-  let endpoint = 'https://courses.cs.washington.edu/'
-  + 'courses/cse154/webservices/pokedex/pokedex.php?pokemon=';
+  let endpoint = 'https://courses.cs.washington.edu/' +
+  'courses/cse154/webservices/pokedex/pokedex.php?pokemon=';
   endpoint += name;
 
   try {
@@ -142,10 +142,10 @@ function setName(name, player) {
   if (player === 'p1') {
     nameQuery = '#p1 .name';
   } else {
-    nameQuery = '#p2 .name'
+    nameQuery = '#p2 .name';
   }
   const PLAYER1_NAME = document.querySelector(nameQuery);
-  const NAME_TEXT = name.substring(0,1).toUpperCase() + name.substring(1);
+  const NAME_TEXT = name.substring(0, 1).toUpperCase() + name.substring(1);
   const NAME_TEXT_NODE = document.createTextNode(NAME_TEXT);
   PLAYER1_NAME.removeChild(PLAYER1_NAME.firstChild);
   PLAYER1_NAME.appendChild(NAME_TEXT_NODE);
@@ -162,37 +162,61 @@ function setMoves(CARDS_JSON, player) {
   let movesQuery;
   let imageQuery;
   let dpQuery;
+  let buttonQuery;
 
   if (player === 'p1') {
     movesQuery = '#p1 .move';
     imageQuery = '#p1 .moves img';
     dpQuery = '#p1 .dp';
+    buttonQuery = '#p1 button';
   } else {
     movesQuery = '#p2 .move';
     imageQuery = '#p2 .moves img';
     dpQuery = '#p2 .dp';
+    buttonQuery = '#p2 button';
   }
 
   const MOVES = CARDS_JSON.moves;
   const MOVES_HTML_ELEMENT = document.querySelectorAll(movesQuery);
   const IMAGES = document.querySelectorAll(imageQuery);
   const DPARRAY = document.querySelectorAll(dpQuery);
+  const BUTTONS = document.querySelectorAll(buttonQuery);
 
+  appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES)
+}
+
+/**
+ * Helper for function above. Takes in the queried elements and appends
+ * the names of the moves to the queried divs, images to the images, DP
+ * to DP div if existant, and finally removes any extra buttons as the
+ * default is four but we only need as many as there are moves
+ * @param {DOM} MOVES_HTML_ELEMENT - all the html elements with the moves class
+ * @param {JSON} MOVES - JSON Array of moves
+ * @param {DOM} DPARRAY - All the DP doms
+ * @param {DOM} BUTTONS - all the buttons DOMS
+ * @param {JSON} IMAGES - JSON object with image links
+ */
+function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
   let i = 0;
 
   for (let j = 0; j < MOVES.length; j++) {
     MOVES_HTML_ELEMENT[i].innerHTML = MOVES[i].name;
     IMAGES[i].src = ENDPOINT + 'icons/' + MOVES[i].type + '.jpg';
 
+    //remove any existing dp if has one otherwise leaves 'dp' if clicked another character
+    if (DPARRAY[i].hasChildNodes()) {
+      DPARRAY[i].removeChild(DPARRAY[i].firstChild);
+    }
     // checks to see if the moves at this position in the array has a key called "dp"
     if (MOVES[i].hasOwnProperty("dp")) {
-      DPARRAY[i].innerHTML = MOVES[i].dp + ' DP';
+      let dpTextNode = document.createTextNode(MOVES[i].dp + ' DP');
+      DPARRAY[i].appendChild(dpTextNode);
     }
     i++;
   }
 
-  const BUTTONS = document.querySelectorAll('#p1 button');
-  for(let j = i; j < MOVES_HTML_ELEMENT.length; j++) {
+  
+  for (let j = i; j < MOVES_HTML_ELEMENT.length; j++) {
     BUTTONS[i].classList.add('hidden');
   }
 }
