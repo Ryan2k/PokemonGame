@@ -408,6 +408,12 @@ function updateHealth(gameJSON) {
     P2_HEALTH_BAR.classList.add('low-health');
   }
 
+  const P1_HP = document.querySelector('#p1 .hp');
+  const P2_HP = document.querySelector('#p2 .hp');
+
+  P1_HP.innerHTML = P1_CURRENT_HP + 'HP';
+  P2_HP.innerHTML = P2_CURRENT_HP + 'HP';
+
   console.log(gameJSON);
   console.log('player 1 current health: ' + P1_CURRENT_HP + ' player 1 start health: ' + gameJSON.p1.hp + ' percentage: ' + P1_HEALTH_PERCENTAGE);
   console.log('player 2 current health: ' + P2_CURRENT_HP + ' player 2 start health: ' + gameJSON.p2.hp + ' percentage: ' + P2_HEALTH_PERCENTAGE);
