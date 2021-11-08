@@ -33,7 +33,7 @@ async function fetchNames() {
     const NAMES_TEXT = await NAMES.text();
     return NAMES_TEXT;
   } catch (error) {
-    handlError(error);
+    handleError(error);
   }
 }
 
@@ -110,7 +110,7 @@ async function getPokemonsJSON(name) {
     const JSON = await RESPONSE.json();
     return JSON;
   } catch (error) {
-    handlError(error);
+    handleError(error);
   }
 }
 
@@ -200,7 +200,6 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
     i++;
   }
 
-
   for (let j = i; j < MOVES_HTML_ELEMENT.length; j++) {
     BUTTONS[i].classList.add('hidden');
   }
@@ -251,6 +250,19 @@ function setOthers(CARDS_JSON, player) {
   HP.innerHTML = CARDS_JSON.hp + 'HP';
 }
 
+/**
+ * Called in an anonymous function when the start-btn is pressed.
+ * Enables all the functionalities needed to get from the pokedex view to the
+ * start of the game. First hides the pokedex-view which displays all the pokemon,
+ * then un hides the html for the second players card.
+ * Calls a function to get the json for the start of the game (explained below),
+ * then calls a function to enables all of the attributes that are hidden when
+ * we are in the pokedex view (explained above toGameView() function)
+ * Finally, calls a function to set event listeners for player 1's moves
+ * which correspond to in game moves and make API Calls. Could not set this originally
+ * because when the game wasnt started, we dont want functionality
+ * @param {*} name 
+ */
 async function startGame(name) {
   // hide pokedex-view which shows selected pokemon
   const POKE_DEX_VIEW = document.getElementById('pokedex-view');
@@ -265,6 +277,140 @@ async function startGame(name) {
   const P2_CARD_JSON = GAME_JSON.p2;
   setPlayer2Card(P2_CARD_JSON);
   toGameView();
+
+  const P1_MOVES = GAME_JSON.p1.moves;
+  const GUID = GAME_JSON.guid;
+  const PID = GAME_JSON.pid;
+  setMovesListeners(P1_MOVES, GUID, PID);
+}
+
+/**
+ * Helper function for start game above. Job is to set event listeners to all
+ * of the active move buttons for p1. Gets all divs under p1 .moves and attaches
+ * a listener so that when it is clicked, makes a call to the game.php API and
+ * recieves a randomly generated move from p2 along with the results of each of
+ * our moves. To make the call, its a POST needing parameters of movename, guid, and pid
+ * @param {Object} P1_MOVES - JSON array with all the moves names and types
+ * @param {String} GUID - String containing the game id
+ * @param {String} PID - string containing the player id
+ */
+function setMovesListeners(P1_MOVES, GUID, PID) {
+  const MOVES = document.querySelectorAll('#p1 button');
+  for (let i = 0; i < P1_MOVES.length; i++) {
+    MOVES[i].addEventListener("click", function() {
+      makeMove(P1_MOVES[i].name, GUID, PID);
+    })
+  }
+}
+
+/**
+ * Function to make move added to each move button as an event listener in the function above.
+ * Takes in the name of the move, the game id, and the player id which are requred to
+ * send a POST request gathering the new game state in the function 1 below.
+ * Then calls 2 additional functions which append the results to the screen and update the
+ * health and health bar of each player. Descriptions are above those respective functions
+ * @param {String} moveName - name of the move we (p1) are trying to make
+ * @param {String} guid - the game id (needed to track the state of a game)
+ * @param {String} pid - the player id
+ */
+async function makeMove(moveName, guid, pid) {
+  const MOVE_RESULTS = await getMoveResults(moveName, guid, pid);
+  appendResults(MOVE_RESULTS.results);
+  updateHealth(MOVE_RESULTS);
+}
+
+/**
+ * Helper method for the function above. Takes in the name of a move, the game id,
+ * and the player id which are the parameters needed to send a POST request to
+ * the game.php API inorder to "play a move". Returns a JSON document contianing the
+ * same information before about the guid, pid, p1, and p2, but this time, has an
+ * additional nested json object called "results" which contains the name of the move
+ * we pass in, the randomly generated opponent move, and whether or not each move hit or missed.
+ * @param {String} moveName - name of the move we are playing
+ * @param {String} guid - the game id
+ * @param {String} pid - the player id
+ * @returns {Object} - the whole JSON returned by the request not just results
+ */
+async function getMoveResults(moveName, guid, pid) {
+  let moveNameElements = moveName.split(" ");
+  let apiReadyMoveName = '';
+  for (let i = 0; i < moveNameElements.length; i++) {
+    apiReadyMoveName += moveNameElements[i];
+  }
+
+  apiReadyMoveName = apiReadyMoveName.toLowerCase();
+
+  let params = new FormData();
+  params.append('guid', guid);
+  params.append('pid', pid);
+  params.append('movename', apiReadyMoveName);
+
+  try {
+    const RESPONSE = await fetch(ENDPOINT + 'game.php', {
+      method: 'POST',
+      body: params
+    })
+
+    await statusCheck(RESPONSE);
+    const JSON = await RESPONSE.json();
+    return JSON;
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+/**
+ * Helper function for the makeMove() method. Takes in the nested JSON from the
+ * response to the post request from the game.php api containing 4 keyval pairs
+ * the move each player played, and the result. Grabs the turn results elements from
+ * the html and changes the text in them to display the moves.
+ * Used resultsJSON["p1-move"] as resultsJSON.p1-move wont work since there is a hyphen
+ * @param {Object} resultsJSON - nested JSON with the 4 vals from above
+ */
+function appendResults(resultsJSON) {
+  const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
+  const P2_TURN_RESULTS = document.getElementById('p2-turn-results');
+
+  const P1_TEXT = 'Player 1 played ' + resultsJSON["p1-move"] + ' and ' + resultsJSON["p1-result"] + '!';
+  const P2_TEXT = 'Player 2 played ' + resultsJSON["p2-move"] + ' and ' + resultsJSON["p2-result"] + '!';
+
+  P1_TURN_RESULTS.innerHTML = P1_TEXT;
+  P2_TURN_RESULTS.innerHTML = P2_TEXT;
+}
+
+/**
+ * Helper for the make move function to update the health of both players.
+ * Has a Few Purposes
+ * 1. Update the displayed health with the current health for each player
+ * 2. Update the health bar under the .health-bar div on each card to make its width
+ * a percentage of the max width where percentage is calculated as (current-hp / hp)
+ * 3. If the percentage is below 20, should add the .low-health class to the health bar
+ * @param {Object} gameJSON 
+ */
+function updateHealth(gameJSON) {
+  const P1_HEALTH_BAR = document.querySelector('#p1 .health-bar');
+  const P2_HEALTH_BAR = document.querySelector('#p2 .health-bar');
+
+  const P1_CURRENT_HP = gameJSON.p1["current-hp"];
+  const P2_CURRENT_HP = gameJSON.p2["current-hp"];
+
+  const P1_HEALTH_PERCENTAGE = P1_CURRENT_HP / gameJSON.p1.hp;
+  const P2_HEALTH_PERCENTAGE = P2_CURRENT_HP / gameJSON.p2.hp;
+
+  P1_HEALTH_BAR.style.width = (P1_HEALTH_PERCENTAGE * 100) + '%';
+  P2_HEALTH_BAR.style.width = (P2_HEALTH_PERCENTAGE * 100) + '%';
+
+  if (P1_HEALTH_PERCENTAGE < .2) {
+    P1_HEALTH_BAR.classList.add('low-health');
+  }
+
+  if (P2_HEALTH_PERCENTAGE < .2) {
+    P2_HEALTH_BAR.classList.add('low-health');
+  }
+
+  console.log(gameJSON);
+  console.log('player 1 current health: ' + P1_CURRENT_HP + ' player 1 start health: ' + gameJSON.p1.hp + ' percentage: ' + P1_HEALTH_PERCENTAGE);
+  console.log('player 2 current health: ' + P2_CURRENT_HP + ' player 2 start health: ' + gameJSON.p2.hp + ' percentage: ' + P2_HEALTH_PERCENTAGE);
 }
 
 /**
@@ -294,7 +440,7 @@ async function getStartGameData(name) {
     const JSON = await RESPONSE.json();
     return JSON;
   } catch (error) {
-    handlError(error);
+    handleError(error);
   }
 }
 
@@ -306,7 +452,7 @@ async function getStartGameData(name) {
  * in the html file.
  * @param {Object} P2_CARD_JSON - JSON object with the second players data (nested from above call)
  */
-async function setPlayer2Card(P2_CARD_JSON) {
+function setPlayer2Card(P2_CARD_JSON) {
   const name = P2_CARD_JSON.name;
 
   setName(name, 'p2');
@@ -341,15 +487,21 @@ function toGameView() {
 
   const P1_MOVES = document.querySelectorAll('#p1 .card button');
   for (let i = 0; i < P1_MOVES.length; i++) {
-    if (P1_MOVES[i].classList.contains('hidden')) {
-      continue;
+    if (!P1_MOVES[i].classList.contains('hidden')) {
+      P1_MOVES[i].disabled = false;
     }
-
-    P1_MOVES[i].disabled = false;
   }
+
+  // also have to unhide p1 and p2 results container because they are hidden for some reason
+
+  const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
+  const P2_TURN_RESULTS = document.getElementById('p2-turn-results');
+
+  P1_TURN_RESULTS.classList.remove('hidden');
+  P2_TURN_RESULTS.classList.remove('hidden');
 }
 
-function handlError(error) {
+function handleError(error) {
 
 }
 
@@ -362,9 +514,9 @@ function handlError(error) {
  * @returns {object} same as input
  */
  async function statusCheck(res) {
-  if (!res.ok) {
-    throw new Error(await res.test());
-  }
+   if (!res.ok) {
+     throw new Error(await res.test());
+   }
 
   return res;
 }
