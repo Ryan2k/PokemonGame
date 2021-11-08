@@ -1,5 +1,7 @@
 "use strict";
 
+const ENDPOINT = 'https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/';
+
 window.addEventListener("load", onLoad);
 
 async function onLoad() {
@@ -66,9 +68,7 @@ function appendSprites(NAMES_LIST) {
   for (let i = 0; i < NAMES_LIST.length; i++) {
     let nameElements = NAMES_LIST[i].split(":");
     let name = nameElements[1];
-    let endpoint = 'https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/sprites/';
-    endpoint += name;
-    endpoint += '.png';
+    let imgEndPoint = ENDPOINT + 'sprites/' + name + '.png';
 
     let image = document.createElement("img");
     if (name === 'bulbasaur' || name === 'charmander' || name === 'squirtle') {
@@ -78,7 +78,7 @@ function appendSprites(NAMES_LIST) {
 
     image.classList.add('sprite');
 
-    image.src = endpoint;
+    image.src = imgEndPoint;
     let id = 'pokemon-' + name;
     image.id = id;
     POKE_DEX_VIEW.appendChild(image);
@@ -99,6 +99,13 @@ async function onCardClick() {
   
   const CARDS_JSON = await getPokemonsJSON(name);
   
+  setName(name, 'p1');
+  setMoves(CARDS_JSON, 'p1');
+  setOthers(CARDS_JSON, 'p1');
+
+  const START_BUTTON = document.getElementById('start-btn');
+  START_BUTTON.classList.remove('hidden');
+  START_BUTTON.addEventListener("click", startGame);
 }
 
 /**
@@ -121,6 +128,130 @@ async function getPokemonsJSON(name) {
   } catch (error) {
     handlError(error);
   }
+}
+
+/**
+ * Takes the name of the pokemon, makes the first letter uppercase, and
+ * appends it to the corresponding card on the html
+ * (#p1 .name if called in onClick and #p2 .name if opponent)
+ * @param {String} name - name of the pokemon we are querying
+ * @param {String} player - p1 or p2 depending on who called it
+ */
+function setName(name, player) {
+  let nameQuery;
+  if (player === 'p1') {
+    nameQuery = '#p1 .name';
+  } else {
+    nameQuery = '#p2 .name'
+  }
+  const PLAYER1_NAME = document.querySelector(nameQuery);
+  const NAME_TEXT = name.substring(0,1).toUpperCase() + name.substring(1);
+  const NAME_TEXT_NODE = document.createTextNode(NAME_TEXT);
+  PLAYER1_NAME.removeChild(PLAYER1_NAME.firstChild);
+  PLAYER1_NAME.appendChild(NAME_TEXT_NODE);
+}
+
+/**
+ * Loops through the size of the moves array in the JSON object and appends all
+ * of the text and images to the corresponding divs in the html. query is different
+ * depending on whether this function was called on the onClick or the random opponent.
+ * @param {Object} CARDS_JSON - JSON Object representing current pokemons info
+ * @param {String} player - either p1 or p2 depending on who called it
+ */
+function setMoves(CARDS_JSON, player) {
+  let movesQuery;
+  let imageQuery;
+  let dpQuery;
+
+  if (player === 'p1') {
+    movesQuery = '#p1 .move';
+    imageQuery = '#p1 .moves img';
+    dpQuery = '#p1 .dp';
+  } else {
+    movesQuery = '#p2 .move';
+    imageQuery = '#p2 .moves img';
+    dpQuery = '#p2 .dp';
+  }
+
+  const MOVES = CARDS_JSON.moves;
+  const MOVES_HTML_ELEMENT = document.querySelectorAll(movesQuery);
+  const IMAGES = document.querySelectorAll(imageQuery);
+  const DPARRAY = document.querySelectorAll(dpQuery);
+
+  let i = 0;
+
+  for (let j = 0; j < MOVES.length; j++) {
+    MOVES_HTML_ELEMENT[i].innerHTML = MOVES[i].name;
+    IMAGES[i].src = ENDPOINT + 'icons/' + MOVES[i].type + '.jpg';
+
+    // checks to see if the moves at this position in the array has a key called "dp"
+    if (MOVES[i].hasOwnProperty("dp")) {
+      DPARRAY[i].innerHTML = MOVES[i].dp + ' DP';
+    }
+    i++;
+  }
+
+  const BUTTONS = document.querySelectorAll('#p1 button');
+  for(let j = i; j < MOVES_HTML_ELEMENT.length; j++) {
+    BUTTONS[i].classList.add('hidden');
+  }
+}
+
+/**
+ * Sets the remaining attributes for a card icon:
+ * The pokemon photo, weakness photo, type icon, description, and health points
+ * Just like the functions above, takes in the JSON object for the card it
+ * will append the elements to, and the name of the player since there are two cards
+ * in the HTML. Then appends them to the below HTML ELements.
+ * @param {Object} CARDS_JSON - JSON Object containing information about the specified pokemon
+ * @param {String} player - p1 or p2 depending on who called it.
+ */
+function setOthers(CARDS_JSON, player) {
+  let pokepicQuery;
+  let weaknessQuery;
+  let descriptionQuery;
+  let hpQuery;
+  let typeIconQuery;
+
+  if (player === 'p1') {
+    pokepicQuery = '#p1 .pokepic';
+    weaknessQuery = '#p1  .weakness';
+    descriptionQuery = '#p1 .info';
+    hpQuery = '#p1 .hp';
+    typeIconQuery = '#p1 .type';
+  } else {
+    pokepicQuery = '#p2 .pokepic';
+    weaknessQuery = '#p2  .weakness';
+    descriptionQuery = '#p2 .info';
+    hpQuery = '#p2 .hp';
+    typeIconQuery = '#p2 .type';
+  }
+
+  const POKEPIC = document.querySelector(pokepicQuery);
+  const WEAKNESS = document.querySelector(weaknessQuery);
+  const DESCRIPTION = document.querySelector(descriptionQuery);
+  const HP = document.querySelector(hpQuery);
+  const TYPEICON = document.querySelector(typeIconQuery);
+
+  const IMAGES = CARDS_JSON.images;
+
+  POKEPIC.src = ENDPOINT + IMAGES.photo;
+  WEAKNESS.src = ENDPOINT + IMAGES.weaknessIcon;
+  TYPEICON.src = ENDPOINT + IMAGES.typeIcon;
+  DESCRIPTION.innerHTML = CARDS_JSON.info.description;
+  HP.innerHTML = CARDS_JSON.hp + 'HP';
+}
+
+function startGame() {
+  // hide pokedex-view which shows selected pokemon
+  const POKE_DEX_VIEW = document.getElementById('pokedex-view');
+  POKE_DEX_VIEW.classList.add('hidden');
+
+  // make the second players card visible
+  const P2 = document.getElementById('p2');
+  P2.classList.remove('hidden');
+
+  // populate second players card
 }
 
 function handlError(error) {
