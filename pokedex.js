@@ -27,8 +27,7 @@ async function getNamesList() {
  */
 async function fetchNames() {
   try {
-    const NAMES = await fetch('https://courses.cs.washington.edu/' +
-    'courses/cse154/webservices/pokedex/pokedex.php?pokedex=all');
+    const NAMES = await fetch(ENDPOINT + 'pokedex.php?pokedex=all');
 
     await statusCheck(NAMES);
     const NAMES_TEXT = await NAMES.text();
@@ -39,29 +38,13 @@ async function fetchNames() {
 }
 
 /**
- * Given to us in lecture
- * Checks to see if the connection status is successfull (200 Response Code)
- * If so, does nothing and continues through res of the code.
- * Otherwise, throws an error and kills the program.
- * @param {object} res - response from get request
- * @returns {object} same as input
- */
-async function statusCheck(res) {
-  if (!res.ok) {
-    throw new Error(await res.test());
-  }
-
-  return res;
-}
-
-/**
  * Takes in a list of the names of all 151 pokemon and uses it to locate the image
  * endpoint by appending to the standard url along with .png at the end
  * Creates a document element of the picture with the source and appends them to the
  * poke-dex-view section which displays all the pokemon
  * all of them except bulbasaur, charmander, and squirtle are given the class 'sprite'
  * which means they have not been found yet and are colored in black
- * @param {List of String} NAMES_LIST - list of all the pokemons names
+ * @param {Array} NAMES_LIST - list of all the pokemons names
  */
 function appendSprites(NAMES_LIST) {
   const POKE_DEX_VIEW = document.getElementById('pokedex-view');
@@ -105,7 +88,9 @@ async function onCardClick() {
 
   const START_BUTTON = document.getElementById('start-btn');
   START_BUTTON.classList.remove('hidden');
-  START_BUTTON.addEventListener("click", startGame);
+  START_BUTTON.addEventListener("click", function() {
+    startGame(name);
+  });
 }
 
 /**
@@ -116,8 +101,7 @@ async function onCardClick() {
  * @returns {Object} json object from description
  */
 async function getPokemonsJSON(name) {
-  let endpoint = 'https://courses.cs.washington.edu/' +
-  'courses/cse154/webservices/pokedex/pokedex.php?pokemon=';
+  let endpoint = ENDPOINT + 'pokedex.php?pokemon=';
   endpoint += name;
 
   try {
@@ -182,7 +166,7 @@ function setMoves(CARDS_JSON, player) {
   const DPARRAY = document.querySelectorAll(dpQuery);
   const BUTTONS = document.querySelectorAll(buttonQuery);
 
-  appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES)
+  appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES);
 }
 
 /**
@@ -203,10 +187,11 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
     MOVES_HTML_ELEMENT[i].innerHTML = MOVES[i].name;
     IMAGES[i].src = ENDPOINT + 'icons/' + MOVES[i].type + '.jpg';
 
-    //remove any existing dp if has one otherwise leaves 'dp' if clicked another character
+    // remove any existing dp if has one otherwise leaves 'dp' if clicked another character
     if (DPARRAY[i].hasChildNodes()) {
       DPARRAY[i].removeChild(DPARRAY[i].firstChild);
     }
+
     // checks to see if the moves at this position in the array has a key called "dp"
     if (MOVES[i].hasOwnProperty("dp")) {
       let dpTextNode = document.createTextNode(MOVES[i].dp + ' DP');
@@ -215,7 +200,7 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
     i++;
   }
 
-  
+
   for (let j = i; j < MOVES_HTML_ELEMENT.length; j++) {
     BUTTONS[i].classList.add('hidden');
   }
@@ -266,7 +251,7 @@ function setOthers(CARDS_JSON, player) {
   HP.innerHTML = CARDS_JSON.hp + 'HP';
 }
 
-function startGame() {
+async function startGame(name) {
   // hide pokedex-view which shows selected pokemon
   const POKE_DEX_VIEW = document.getElementById('pokedex-view');
   POKE_DEX_VIEW.classList.add('hidden');
@@ -276,8 +261,110 @@ function startGame() {
   P2.classList.remove('hidden');
 
   // populate second players card
+  const GAME_JSON = await getStartGameData(name);
+  const P2_CARD_JSON = GAME_JSON.p2;
+  setPlayer2Card(P2_CARD_JSON);
+  toGameView();
+}
+
+/**
+ * Sends a post request to get initial game state information such as,
+ * the game id, the player id, the moves each player took, and player 2's random character
+ * To send the post request need to set 2 parameters:
+ * 1. stargame=true
+ * 2. mypokemon=<the name of the selected pokemon>
+ * Similar to get request but have to specify that it is a post, and give it the body
+ * of key value pairs in the form of a FormData object
+ * @param {String} name - name of the current pokemon we have chosen
+ * @returns {Object} - JSON for the game data including a nested JSON with player 2's info
+ */
+async function getStartGameData(name) {
+  const GAME_ENDPOINT = ENDPOINT + 'game.php';
+  let params = new FormData();
+  params.append('startgame', true);
+  params.append('mypokemon', name);
+
+  try {
+    const RESPONSE = await fetch(GAME_ENDPOINT, {
+      method: 'POST',
+      body: params
+    });
+
+    await statusCheck(RESPONSE);
+    const JSON = await RESPONSE.json();
+    return JSON;
+  } catch (error) {
+    handlError(error);
+  }
+}
+
+/**
+ * Takes in the JSON data from the above call and selects the nested JSON of p2.
+ * p2 is randomly generated by the server and has a set of moves, name, images, etc.
+ * Just like the information got from the player one card, and calls those same functions
+ * just specifying p2 as a parameter so it gets appended to the div labeled p2 for the card
+ * in the html file.
+ * @param {Object} P2_CARD_JSON - JSON object with the second players data (nested from above call)
+ */
+async function setPlayer2Card(P2_CARD_JSON) {
+  const name = P2_CARD_JSON.name;
+
+  setName(name, 'p2');
+  setMoves(P2_CARD_JSON, 'p2');
+  setOthers(P2_CARD_JSON, 'p2');
+}
+
+/**
+ * This function takes a few steps to change to the game view by
+ * manipulating some of the css classes such as:
+ * 1. Makes #result-container visible which populates center of page with moves
+ * 2. Shows #flee-btn underneath #p1
+ * 3. Hides the start button again
+ * 4. Enables all of the visible move buttons for #p1. The pokedex.html comes
+ * with these buttons disabled by defualt so we set this attribute to false to disable
+ * and can re-enable it by setting the attribute to true;
+ * 5. Show pokemons hp bar by removing the hidden class from .hp-info
+ * 6. Change the text in the header from "Your Pokedex" to "Pokemon Battle!"
+ */
+function toGameView() {
+  const RESULTS_CONTAINER = document.getElementById('results-container');
+  const P1_FLEE_BTN = document.getElementById('flee-btn'); // only exists for p1, no need to query
+  const START_BUTTON = document.getElementById('start-btn');
+  const HP_INFO = document.querySelector('.hidden.hp-info');
+  const HEADER_H1 = document.querySelector('h1'); // only one h1 in entire html
+
+  RESULTS_CONTAINER.classList.remove('hidden');
+  P1_FLEE_BTN.classList.remove('hidden');
+  START_BUTTON.classList.add('hidden'); // we have removed the hidden class in an above function
+  HP_INFO.classList.remove('hidden');
+  HEADER_H1.innerHTML = 'Pokemon Battle!';
+
+  const P1_MOVES = document.querySelectorAll('#p1 .card button');
+  for (let i = 0; i < P1_MOVES.length; i++) {
+    if (P1_MOVES[i].classList.contains('hidden')) {
+      continue;
+    }
+
+    P1_MOVES[i].disabled = false;
+  }
 }
 
 function handlError(error) {
 
+}
+
+/**
+ * Given to us in lecture
+ * Checks to see if the connection status is successfull (200 Response Code)
+ * If so, does nothing and continues through res of the code.
+ * Otherwise, throws an error and kills the program.
+ * @param {object} res - response from get request
+ * @returns {object} same as input
+ */
+ async function statusCheck(res) {
+  if (!res.ok) {
+    throw new Error(await res.test());
+  }
+
+  return res;
 }
