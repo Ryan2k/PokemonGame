@@ -222,26 +222,26 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
  */
 function setOthers(CARDS_JSON, player) {
   let pokepicQuery;
-  let weaknessQuery;
+  let wknsQuery;
   let descriptionQuery;
   let hpQuery;
   let typeIconQuery;
 
   if (player === 'p1') {
     pokepicQuery = '#p1 .pokepic';
-    weaknessQuery = '#p1  .weakness';
+    wknsQuery = '#p1  .weakness';
     descriptionQuery = '#p1 .info';
     hpQuery = '#p1 .hp';
     typeIconQuery = '#p1 .type';
   } else {
     pokepicQuery = '#p2 .pokepic';
-    weaknessQuery = '#p2  .weakness';
+    wknsQuery = '#p2  .weakness';
     descriptionQuery = '#p2 .info';
     hpQuery = '#p2 .hp';
     typeIconQuery = '#p2 .type';
   }
 
-  setOthersHelper(pokepicQuery, weaknessQuery, descriptionQuery, hpQuery, typeIconQuery, CARDS_JSON);
+  setOthersHelper(pokepicQuery, wknsQuery, descriptionQuery, hpQuery, typeIconQuery, CARDS_JSON);
 }
 
 /**
@@ -591,6 +591,8 @@ function endGame(p1Won, startHealth, opponentShortname) {
     const FOUND_OPPONENT = document.getElementById('pokemon-' + opponentShortname);
     FOUND_OPPONENT.classList.add('found');
     FOUND_OPPONENT.addEventListener("click", onCardClick);
+    const P2_TURN_RESULTS = document.getElementById('p2-turn-results');
+    P2_TURN_RESULTS.classList.add('hidden');
   } else {
     H1.innerHTML = 'You Lost!';
   }
@@ -641,6 +643,7 @@ function toPokedexView(startHealth) {
   const HP_INFO = document.querySelector('#p1 .hp-info');
   const START_BUTTON = document.getElementById('start-btn');
   const POKE_DEX_VIEW = document.getElementById('pokedex-view');
+  const H1 = document.querySelector('h1');
 
   BACK_TO_POKEDEX.classList.add('hidden');
   RESULTS_CONTAINER.classList.add('hidden');
@@ -651,6 +654,7 @@ function toPokedexView(startHealth) {
 
   const HP = document.querySelector('#p1 .hp');
   HP.innerHTML = startHealth + 'HP';
+  H1.innerHTML = 'Your Pokedex';
 
   resetP2AndLog();
 }
