@@ -241,13 +241,28 @@ function setOthers(CARDS_JSON, player) {
     typeIconQuery = '#p2 .type';
   }
 
-  const POKEPIC = document.querySelector(pokepicQuery);
-  const WEAKNESS = document.querySelector(weaknessQuery);
-  const DESCRIPTION = document.querySelector(descriptionQuery);
-  const HP = document.querySelector(hpQuery);
-  const TYPEICON = document.querySelector(typeIconQuery);
+  setOthersHelper(pokepicQuery, weaknessQuery, descriptionQuery, hpQuery, typeIconQuery, CARDS_JSON);
+}
 
+/**
+ * Helper to shorten function above, takes in all of the query strings which
+ * are figured out in the function above based on which player is going to be calling the
+ * funcion, and finds all the dom elements using those query strings and appends the
+ * described values from the function above there.
+ * @param {String} ppQ - query string for the pokepic
+ * @param {String} wknsQ - query string for the weakness icon element
+ * @param {String} dscrQ - query string to find the right description element
+ * @param {String} hpQ - query string to find the right hp bar
+ * @param {String} tiQ - query string to find the right type icon element
+ * @param {Object} CARDS_JSON - JSON Object
+ */
+function setOthersHelper(ppQ, wknsQ, dscrQ, hpQ, tiQ, CARDS_JSON) {
   const IMAGES = CARDS_JSON.images;
+  const POKEPIC = document.querySelector(ppQ);
+  const WEAKNESS = document.querySelector(wknsQ);
+  const DESCRIPTION = document.querySelector(dscrQ);
+  const HP = document.querySelector(hpQ);
+  const TYPEICON = document.querySelector(tiQ);
 
   POKEPIC.src = ENDPOINT + IMAGES.photo;
   WEAKNESS.src = ENDPOINT + IMAGES.weaknessIcon;
