@@ -326,6 +326,8 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
  * @param {String} pid - the player id
  */
 async function makeMove(moveName, guid, pid) {
+  console.log('game id: ' + guid);
+  console.log('player id: ' + pid);
   const MOVE_RESULTS = await getMoveResults(moveName, guid, pid);
   appendResults(MOVE_RESULTS.results);
   updateHealth(MOVE_RESULTS);
