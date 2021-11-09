@@ -4,6 +4,12 @@ const ENDPOINT = 'https://courses.cs.washington.edu/courses/cse154/webservices/p
 
 window.addEventListener("load", onLoad);
 
+/**
+ * Gets called when the page loads on the clients browser. Sends an initial get request
+ * to the names api through the getNamesList() function, and once that returns, calls
+ * the appendSprites() function passing in the JSON returned from the first function.
+ * More detailed descriptions of each are above the respective methods
+ */
 async function onLoad() {
   const NAMES_LIST = await getNamesList();
   appendSprites(NAMES_LIST);
@@ -540,8 +546,14 @@ function toGameView() {
   P2_TURN_RESULTS.classList.remove('hidden');
 }
 
+/**
+ * Gets called when there is an error caught in any of the API requests.
+ * Takes in an object and appends a message to the head of the screen
+ * @param {Object} error - error caught in fetch try catch
+ */
 function handleError(error) {
-
+  const H1 = document.querySelector('h1');
+  H1.innerHTML = 'Unable to connect to the API. Server could be down or recheck connection!';
 }
 
 /**
