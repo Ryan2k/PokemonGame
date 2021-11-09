@@ -325,11 +325,11 @@ async function makeMove(moveName, guid, pid) {
   updateHealth(MOVE_RESULTS);
 
   if (MOVE_RESULTS.p1["current-hp"] === 0) {
-    endGame(false);
+    endGame(false, MOVE_RESULTS.p1.hp, MOVE_RESULTS.p2.shortname);
   }
 
   if (MOVE_RESULTS.p2["current-hp"] === 0) {
-    endGame(true);
+    endGame(true, MOVE_RESULTS.p1.hp, MOVE_RESULTS.p2.shortname);
   }
 }
 
@@ -547,17 +547,35 @@ function handleError(error) {
  * Gets called when one of the players current hp level got brought down to 0.
  * Sets the h1 on the top of the page to either you won! or you lost! depending
  * on the value of p1Won. Then loops through all the buttons that we enabled earlier
- * and disables them once again. Also removes the flee button.
+ * and disables them once again. Also removes the flee button. If p1 won, we should also
+ * be taking the sprite of the opponent we beat, and turn it into found giving it an
+ * event listener which when clicked, can play with the character.
  * @param {Boolean} p1Won - true if player 2;s health is 0 and false otherwise
+ * @param {Integer} startHealth - represents the initial health of the current pokemon
  */
-function endGame(p1Won) {
+function endGame(p1Won, startHealth, opponentShortname) {
   const H1 = document.querySelector('h1');
   if (p1Won) {
     H1.innerHTML = 'You Won!';
+    const FOUND_OPPONENT = document.getElementById('pokemon-' + opponentShortname);
+    FOUND_OPPONENT.classList.add('found');
+    FOUND_OPPONENT.addEventListener("click", onCardClick);
   } else {
     H1.innerHTML = 'You Lost!';
   }
 
+  endGameButtons(startHealth);
+}
+
+/**
+ * Helper function for the endGame function above. In charge of looping through
+ * all the buttons we set the disabled value to false, and sets them back to true.
+ * These are the buttons that enable active moves to be clicked to call the API.
+ * Then hides the flee button and displays the back to pokedex button giving it the
+ * functionality of going to the default screen (pokedex view).
+ * @param {Integer} startHealth - represents the initial health of the current pokemon
+ */
+function endGameButtons(startHealth) {
   const P1_MOVES = document.querySelectorAll('#p1 .card button');
   for (let i = 0; i < P1_MOVES.length; i++) {
     if (!P1_MOVES[i].classList.contains('hidden')) {
@@ -567,6 +585,69 @@ function endGame(p1Won) {
 
   const FLEE_BTN = document.getElementById('flee-btn');
   FLEE_BTN.classList.add('hidden');
+
+  const BACK_TO_POKEDEX = document.getElementById('endgame');
+  BACK_TO_POKEDEX.classList.remove('hidden');
+  BACK_TO_POKEDEX.addEventListener("click", function() {
+    toPokedexView(startHealth);
+  });
+}
+
+/**
+ * When the endgame button is clicked, sends back to pokedex view.
+ * Does this by first hiding the #endgame butto, #results-container,
+ * and #p2. The .hp-info container for #p1 should also be hidden.
+ * The #start-button will be redisplayed. The current pokemon stays
+ * in the view box. The h1 heading is changed back to "Your Pokedex".
+ * Lastly, the health in the hp value should be brought back to the
+ * current pokemons start health.
+ * @param {Integer} startHealth - represents the initial health of the current pokemon
+ */
+function toPokedexView(startHealth) {
+  const BACK_TO_POKEDEX = document.getElementById('endgame');
+  const RESULTS_CONTAINER = document.getElementById('results-container');
+  const P2 = document.getElementById('p2');
+  const HP_INFO = document.querySelector('#p1 .hp-info');
+  const START_BUTTON = document.getElementById('start-btn');
+  const POKE_DEX_VIEW = document.getElementById('pokedex-view');
+
+  BACK_TO_POKEDEX.classList.add('hidden');
+  RESULTS_CONTAINER.classList.add('hidden');
+  P2.classList.add('hidden');
+  HP_INFO.classList.add('hidden');
+  START_BUTTON.classList.remove('hidden');
+  POKE_DEX_VIEW.classList.remove('hidden');
+
+  const HP = document.querySelector('#p1 .hp');
+  HP.innerHTML = startHealth + 'HP';
+
+  resetP2AndLog();
+}
+
+/**
+ * Helper function for function above. Its job is to reset the turn result logs
+ * and reset the health bar. Resets the health bars for players 1 and 2 by bringing
+ * the width back to 100% and taking off the low health class if they exist.
+ */
+function resetP2AndLog() {
+  const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
+  const P2_TURN_RESULTS = document.getElementById('p2-turn-results');
+
+  P1_TURN_RESULTS.innerHTML = '';
+  P2_TURN_RESULTS.innerHTML = '';
+
+  const P1_HEALTH_BAR = document.querySelector('#p1 .health-bar');
+  const P2_HEALTH_BAR = document.querySelector('#p2 .health-bar');
+
+  if (P1_HEALTH_BAR.classList.contains('low-health')) {
+    P1_HEALTH_BAR.classList.remove('low-health');
+  }
+  if (P2_HEALTH_BAR.classList.contains('low-health')) {
+   P2_HEALTH_BAR.classList.remove('low-health');
+  }
+
+  P1_HEALTH_BAR.style.width = '100%';
+  P2_HEALTH_BAR.style.width = '100%';
 }
 
 /**
