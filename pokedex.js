@@ -261,7 +261,7 @@ function setOthers(CARDS_JSON, player) {
  * Finally, calls a function to set event listeners for player 1's moves
  * which correspond to in game moves and make API Calls. Could not set this originally
  * because when the game wasnt started, we dont want functionality
- * @param {*} name 
+ * @param {String} name - name of the pokemon p1 is using
  */
 async function startGame(name) {
   // hide pokedex-view which shows selected pokemon
@@ -299,14 +299,14 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
   for (let i = 0; i < P1_MOVES.length; i++) {
     MOVES[i].addEventListener("click", function() {
       makeMove(P1_MOVES[i].name, GUID, PID);
-    })
+    });
   }
 
   const FLEE_BTN = document.getElementById('flee-btn');
 
   FLEE_BTN.addEventListener("click", function() {
     onFleeButton(GUID, PID);
-  })
+  });
 }
 
 /**
@@ -381,7 +381,7 @@ async function getMoveResults(moveName, guid, pid) {
     const RESPONSE = await fetch(ENDPOINT + 'game.php', {
       method: 'POST',
       body: params
-    })
+    });
 
     await statusCheck(RESPONSE);
     const JSON = await RESPONSE.json();
@@ -403,8 +403,10 @@ function appendResults(resultsJSON) {
   const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
   const P2_TURN_RESULTS = document.getElementById('p2-turn-results');
 
-  const P1_TEXT = 'Player 1 played ' + resultsJSON["p1-move"] + ' and ' + resultsJSON["p1-result"] + '!';
-  const P2_TEXT = 'Player 2 played ' + resultsJSON["p2-move"] + ' and ' + resultsJSON["p2-result"] + '!';
+  const P1_TEXT = 'Player 1 played ' +
+  resultsJSON["p1-move"] + ' and ' + resultsJSON["p1-result"] + '!';
+  const P2_TEXT = 'Player 2 played ' +
+  resultsJSON["p2-move"] + ' and ' + resultsJSON["p2-result"] + '!';
 
   P1_TURN_RESULTS.innerHTML = P1_TEXT;
   P2_TURN_RESULTS.innerHTML = P2_TEXT;
@@ -417,7 +419,7 @@ function appendResults(resultsJSON) {
  * 2. Update the health bar under the .health-bar div on each card to make its width
  * a percentage of the max width where percentage is calculated as (current-hp / hp)
  * 3. If the percentage is below 20, should add the .low-health class to the health bar
- * @param {Object} gameJSON 
+ * @param {Object} gameJSON - json object returned by the API call to the game.php API
  */
 function updateHealth(gameJSON) {
   const P1_HEALTH_BAR = document.querySelector('#p1 .health-bar');
@@ -429,14 +431,17 @@ function updateHealth(gameJSON) {
   const P1_HEALTH_PERCENTAGE = P1_CURRENT_HP / gameJSON.p1.hp;
   const P2_HEALTH_PERCENTAGE = P2_CURRENT_HP / gameJSON.p2.hp;
 
-  P1_HEALTH_BAR.style.width = (P1_HEALTH_PERCENTAGE * 100) + '%';
-  P2_HEALTH_BAR.style.width = (P2_HEALTH_PERCENTAGE * 100) + '%';
+  const MAX_WIDTH = 100;
 
-  if (P1_HEALTH_PERCENTAGE < .2) {
+  P1_HEALTH_BAR.style.width = (P1_HEALTH_PERCENTAGE * MAX_WIDTH) + '%';
+  P2_HEALTH_BAR.style.width = (P2_HEALTH_PERCENTAGE * MAX_WIDTH) + '%';
+
+  const MAX_NONE_LOW_HEALTH = 0.2;
+  if (P1_HEALTH_PERCENTAGE < MAX_NONE_LOW_HEALTH) {
     P1_HEALTH_BAR.classList.add('low-health');
   }
 
-  if (P2_HEALTH_PERCENTAGE < .2) {
+  if (P2_HEALTH_PERCENTAGE < MAX_NONE_LOW_HEALTH) {
     P2_HEALTH_BAR.classList.add('low-health');
   }
 
@@ -445,10 +450,6 @@ function updateHealth(gameJSON) {
 
   P1_HP.innerHTML = P1_CURRENT_HP + 'HP';
   P2_HP.innerHTML = P2_CURRENT_HP + 'HP';
-
-  console.log(gameJSON);
-  console.log('player 1 current health: ' + P1_CURRENT_HP + ' player 1 start health: ' + gameJSON.p1.hp + ' percentage: ' + P1_HEALTH_PERCENTAGE);
-  console.log('player 2 current health: ' + P2_CURRENT_HP + ' player 2 start health: ' + gameJSON.p2.hp + ' percentage: ' + P2_HEALTH_PERCENTAGE);
 }
 
 /**
@@ -552,6 +553,7 @@ function handleError(error) {
  * event listener which when clicked, can play with the character.
  * @param {Boolean} p1Won - true if player 2;s health is 0 and false otherwise
  * @param {Integer} startHealth - represents the initial health of the current pokemon
+ * @param {String} opponentShortname - the full lower case name of the p2 pokemon
  */
 function endGame(p1Won, startHealth, opponentShortname) {
   const H1 = document.querySelector('h1');
@@ -643,7 +645,7 @@ function resetP2AndLog() {
     P1_HEALTH_BAR.classList.remove('low-health');
   }
   if (P2_HEALTH_BAR.classList.contains('low-health')) {
-   P2_HEALTH_BAR.classList.remove('low-health');
+    P2_HEALTH_BAR.classList.remove('low-health');
   }
 
   P1_HEALTH_BAR.style.width = '100%';
@@ -658,10 +660,10 @@ function resetP2AndLog() {
  * @param {object} res - response from get request
  * @returns {object} same as input
  */
- async function statusCheck(res) {
-   if (!res.ok) {
-     throw new Error(await res.test());
-   }
+async function statusCheck(res) {
+  if (!res.ok) {
+    throw new Error(await res.test());
+  }
 
   return res;
 }
