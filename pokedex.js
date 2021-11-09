@@ -301,6 +301,12 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
       makeMove(P1_MOVES[i].name, GUID, PID);
     })
   }
+
+  const FLEE_BTN = document.getElementById('flee-btn');
+
+  FLEE_BTN.addEventListener("click", function() {
+    onFleeButton(GUID, PID);
+  })
 }
 
 /**
@@ -317,6 +323,32 @@ async function makeMove(moveName, guid, pid) {
   const MOVE_RESULTS = await getMoveResults(moveName, guid, pid);
   appendResults(MOVE_RESULTS.results);
   updateHealth(MOVE_RESULTS);
+
+  if (MOVE_RESULTS.p1["current-hp"] === 0) {
+    endGame(false);
+  }
+
+  if (MOVE_RESULTS.p2["current-hp"] === 0) {
+    endGame(true);
+  }
+}
+
+/**
+ * Called when the button with the id flee-btn is clicked.
+ * It makes a request to the game play api but submits the move as flee this time.
+ * We dont need the information from this call, rather just let the game know that its over.
+ * This will cause player 1 to lose so need to set the hp to 0, call the end game,
+ * and change the bar and everything.
+ * @param {String} guid - game id used to make API call
+ * @param {String} pid - player id used to make API call
+ */
+async function onFleeButton(guid, pid) {
+  const RESPONSE = await getMoveResults('flee', guid, pid);
+  updateHealth(RESPONSE);
+
+  const MESSAGE = 'Player 1 played flee and lost!';
+  const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
+  P1_TURN_RESULTS.innerHTML = MESSAGE;
 }
 
 /**
@@ -509,6 +541,32 @@ function toGameView() {
 
 function handleError(error) {
 
+}
+
+/**
+ * Gets called when one of the players current hp level got brought down to 0.
+ * Sets the h1 on the top of the page to either you won! or you lost! depending
+ * on the value of p1Won. Then loops through all the buttons that we enabled earlier
+ * and disables them once again. Also removes the flee button.
+ * @param {Boolean} p1Won - true if player 2;s health is 0 and false otherwise
+ */
+function endGame(p1Won) {
+  const H1 = document.querySelector('h1');
+  if (p1Won) {
+    H1.innerHTML = 'You Won!';
+  } else {
+    H1.innerHTML = 'You Lost!';
+  }
+
+  const P1_MOVES = document.querySelectorAll('#p1 .card button');
+  for (let i = 0; i < P1_MOVES.length; i++) {
+    if (!P1_MOVES[i].classList.contains('hidden')) {
+      P1_MOVES[i].disabled = true;
+    }
+  }
+
+  const FLEE_BTN = document.getElementById('flee-btn');
+  FLEE_BTN.classList.add('hidden');
 }
 
 /**
