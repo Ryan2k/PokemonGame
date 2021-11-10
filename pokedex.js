@@ -538,10 +538,13 @@ function toGameView() {
   const RESULTS_CONTAINER = document.getElementById('results-container');
   const P1_FLEE_BTN = document.getElementById('flee-btn'); // only exists for p1, no need to query
   const START_BUTTON = document.getElementById('start-btn');
-  const HP_INFO = document.querySelector('.hidden.hp-info');
+  const HP_INFO = document.querySelector('.hp-info');
   const HEADER_H1 = document.querySelector('h1'); // only one h1 in entire html
 
-  RESULTS_CONTAINER.classList.remove('hidden');
+  if (RESULTS_CONTAINER.classList.contains('hidden')) {
+    RESULTS_CONTAINER.classList.remove('hidden');
+  }
+
   P1_FLEE_BTN.classList.remove('hidden');
   START_BUTTON.classList.add('hidden'); // we have removed the hidden class in an above function
   HP_INFO.classList.remove('hidden');
@@ -570,7 +573,7 @@ function toGameView() {
  */
 function handleError(error) {
   const H1 = document.querySelector('h1');
-  H1.innerHTML = 'Unable to connect to the API. Server could be down or recheck connection!';
+  H1.innerHTML = error;
 }
 
 /**
