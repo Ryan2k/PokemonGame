@@ -200,9 +200,13 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
     }
 
     // checks to see if the moves at this position in the array has a key called "dp"
-    if (MOVES[i].hasOwnProperty("dp")) {
+    if ("dp" in MOVES[i]) {
       let dpTextNode = document.createTextNode(MOVES[i].dp + ' DP');
       DPARRAY[i].appendChild(dpTextNode);
+    }
+
+    if (BUTTONS[i].classList.contains('hidden')) {
+      BUTTONS[i].classList.remove('hidden');
     }
     i++;
   }
@@ -321,8 +325,9 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
  * @param {String} pid - the player id
  */
 async function makeMove(moveName, guid, pid) {
-  console.log('game id: ' + guid);
-  console.log('player id: ' + pid);
+  // console.log('game id: ' + guid);
+  // console.log('player id: ' + pid);
+
   const LOADING_IMAGE = document.getElementById('loading');
   LOADING_IMAGE.classList.remove('hidden');
   const MOVE_RESULTS = await getMoveResults(moveName, guid, pid);
@@ -460,8 +465,14 @@ function updateHealth(gameJSON) {
   P1_HP.innerHTML = P1_CURRENT_HP + 'HP';
   P2_HP.innerHTML = P2_CURRENT_HP + 'HP';
 
-  console.log("Player 1 Starting Health: " + gameJSON.p1.hp + " Player 1 Current Health: " + P1_CURRENT_HP + " Percentage: " + P1_HEALTH_PERCENTAGE);
-  console.log("Player 2 Starting Health: " + gameJSON.p2.hp + " Player 2 Current Health: " + P2_CURRENT_HP + " Percentage: " + P2_HEALTH_PERCENTAGE);
+  /*console.log("Player 1 Starting Health: " +
+   *gameJSON.p1.hp + " Player 1 Current Health: " +
+   *P1_CURRENT_HP + " Percentage: " + P1_HEALTH_PERCENTAGE);
+   *console.log("Player 2 Starting Health: " +
+   *gameJSON.p2.hp + " Player 2 Current Health: " +
+   *P2_CURRENT_HP + " Percentage: " + P2_HEALTH_PERCENTAGE);
+   */
+
 }
 
 /**
