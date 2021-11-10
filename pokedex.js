@@ -94,6 +94,7 @@ async function onCardClick() {
 
   const START_BUTTON = document.getElementById('start-btn');
   START_BUTTON.classList.remove('hidden');
+
   START_BUTTON.addEventListener("click", function() {
     startGame(name);
   });
@@ -221,54 +222,33 @@ function appendMoves(MOVES_HTML_ELEMENT, MOVES, DPARRAY, BUTTONS, IMAGES) {
  * @param {String} player - p1 or p2 depending on who called it.
  */
 function setOthers(CARDS_JSON, player) {
-  let pokepicQuery;
-  let wknsQuery;
-  let descriptionQuery;
-  let hpQuery;
-  let typeIconQuery;
+  let pokepic;
+  let weakness;
+  let description;
+  let hp;
+  let typeIcon;
 
   if (player === 'p1') {
-    pokepicQuery = '#p1 .pokepic';
-    wknsQuery = '#p1  .weakness';
-    descriptionQuery = '#p1 .info';
-    hpQuery = '#p1 .hp';
-    typeIconQuery = '#p1 .type';
+    pokepic = document.querySelector('#p1 .pokepic');
+    weakness = document.querySelector('#p1  .weakness');
+    description = document.querySelector('#p1 .info');
+    hp = document.querySelector('#p1 .hp');
+    typeIcon = document.querySelector('#p1 .type');
   } else {
-    pokepicQuery = '#p2 .pokepic';
-    wknsQuery = '#p2  .weakness';
-    descriptionQuery = '#p2 .info';
-    hpQuery = '#p2 .hp';
-    typeIconQuery = '#p2 .type';
+    pokepic = document.querySelector('#p2 .pokepic');
+    weakness = document.querySelector('#p2  .weakness');
+    description = document.querySelector('#p2 .info');
+    hp = document.querySelector('#p2 .hp');
+    typeIcon = document.querySelector('#p2 .type');
   }
 
-  setOthersHelper(pokepicQuery, wknsQuery, descriptionQuery, hpQuery, typeIconQuery, CARDS_JSON);
-}
-
-/**
- * Helper to shorten function above, takes in all of the query strings which
- * are figured out in the function above based on which player is going to be calling the
- * funcion, and finds all the dom elements using those query strings and appends the
- * described values from the function above there.
- * @param {String} ppQ - query string for the pokepic
- * @param {String} wknsQ - query string for the weakness icon element
- * @param {String} dscrQ - query string to find the right description element
- * @param {String} hpQ - query string to find the right hp bar
- * @param {String} tiQ - query string to find the right type icon element
- * @param {Object} CARDS_JSON - JSON Object
- */
-function setOthersHelper(ppQ, wknsQ, dscrQ, hpQ, tiQ, CARDS_JSON) {
   const IMAGES = CARDS_JSON.images;
-  const POKEPIC = document.querySelector(ppQ);
-  const WEAKNESS = document.querySelector(wknsQ);
-  const DESCRIPTION = document.querySelector(dscrQ);
-  const HP = document.querySelector(hpQ);
-  const TYPEICON = document.querySelector(tiQ);
 
-  POKEPIC.src = ENDPOINT + IMAGES.photo;
-  WEAKNESS.src = ENDPOINT + IMAGES.weaknessIcon;
-  TYPEICON.src = ENDPOINT + IMAGES.typeIcon;
-  DESCRIPTION.innerHTML = CARDS_JSON.info.description;
-  HP.innerHTML = CARDS_JSON.hp + 'HP';
+  pokepic.src = ENDPOINT + IMAGES.photo;
+  weakness.src = ENDPOINT + IMAGES.weaknessIcon;
+  typeIcon.src = ENDPOINT + IMAGES.typeIcon;
+  description.innerHTML = CARDS_JSON.info.description;
+  hp.innerHTML = CARDS_JSON.hp + 'HP';
 }
 
 /**
@@ -376,6 +356,8 @@ async function onFleeButton(guid, pid) {
   const MESSAGE = 'Player 1 played flee and lost!';
   const P1_TURN_RESULTS = document.getElementById('p1-turn-results');
   P1_TURN_RESULTS.innerHTML = MESSAGE;
+
+  endGame(false, RESPONSE.p1.hp, RESPONSE.p2.shortname);
 }
 
 /**
@@ -477,6 +459,9 @@ function updateHealth(gameJSON) {
 
   P1_HP.innerHTML = P1_CURRENT_HP + 'HP';
   P2_HP.innerHTML = P2_CURRENT_HP + 'HP';
+
+  console.log("Player 1 Starting Health: " + gameJSON.p1.hp + " Player 1 Current Health: " + P1_CURRENT_HP + " Percentage: " + P1_HEALTH_PERCENTAGE);
+  console.log("Player 2 Starting Health: " + gameJSON.p2.hp + " Player 2 Current Health: " + P2_CURRENT_HP + " Percentage: " + P2_HEALTH_PERCENTAGE);
 }
 
 /**
@@ -551,6 +536,7 @@ function toGameView() {
 
   P1_FLEE_BTN.classList.remove('hidden');
   START_BUTTON.classList.add('hidden'); // we have removed the hidden class in an above function
+
   HP_INFO.classList.remove('hidden');
   HEADER_H1.innerHTML = 'Pokemon Battle!';
 
