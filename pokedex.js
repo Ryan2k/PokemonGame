@@ -1,3 +1,14 @@
+/*
+ *  Name: Ryan Khamneian
+ *  Date: November 10, 2021
+ *  Section: CSE 154 AB
+ * 
+ *  This is the JavaScript code where all of the "work" is done for the game.
+ *  All of the event listeners are added here, all of the actions done on
+ *  specific clicks are added here, all of the GET and POST request to the
+ *  games API's for fetching characters, moves, game state, etc. are done here as well.
+ */
+
 "use strict";
 
 const ENDPOINT = 'https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/';
@@ -325,8 +336,10 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
  * @param {String} pid - the player id
  */
 async function makeMove(moveName, guid, pid) {
-  // console.log('game id: ' + guid);
-  // console.log('player id: ' + pid);
+  /*
+   *console.log('game id: ' + guid);
+   *console.log('player id: ' + pid);
+   */
 
   const LOADING_IMAGE = document.getElementById('loading');
   LOADING_IMAGE.classList.remove('hidden');
@@ -465,7 +478,8 @@ function updateHealth(gameJSON) {
   P1_HP.innerHTML = P1_CURRENT_HP + 'HP';
   P2_HP.innerHTML = P2_CURRENT_HP + 'HP';
 
-  /*console.log("Player 1 Starting Health: " +
+  /*
+   *console.log("Player 1 Starting Health: " +
    *gameJSON.p1.hp + " Player 1 Current Health: " +
    *P1_CURRENT_HP + " Percentage: " + P1_HEALTH_PERCENTAGE);
    *console.log("Player 2 Starting Health: " +
