@@ -2,7 +2,7 @@
  *  Name: Ryan Khamneian
  *  Date: November 10, 2021
  *  Section: CSE 154 AB
- * 
+ *
  *  This is the JavaScript code where all of the "work" is done for the game.
  *  All of the event listeners are added here, all of the actions done on
  *  specific clicks are added here, all of the GET and POST request to the
