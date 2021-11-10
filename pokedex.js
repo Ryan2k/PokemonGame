@@ -343,9 +343,13 @@ function setMovesListeners(P1_MOVES, GUID, PID) {
 async function makeMove(moveName, guid, pid) {
   console.log('game id: ' + guid);
   console.log('player id: ' + pid);
+  const LOADING_IMAGE = document.getElementById('loading');
+  LOADING_IMAGE.classList.remove('hidden');
   const MOVE_RESULTS = await getMoveResults(moveName, guid, pid);
-  appendResults(MOVE_RESULTS.results);
   updateHealth(MOVE_RESULTS);
+
+  await appendResults(MOVE_RESULTS.results);
+  LOADING_IMAGE.classList.add('hidden')
 
   if (MOVE_RESULTS.p1["current-hp"] === 0) {
     endGame(false, MOVE_RESULTS.p1.hp, MOVE_RESULTS.p2.shortname);
